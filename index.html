@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SCANDALS 2.0 — Tim SS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #f5f2ee; --bg2: #edeae5; --surface: #ffffff;
+  --border:  #ddd9d2; --border2: #c8c3bb;
+  --text:    #1a1714; --text2: #5a5450; --text3: #9c9590;
+  --accent:  #c0392b; --accent2: #e67e22;
+  --green:   #27ae60; --blue: #2980b9; --purple: #8e44ad;
+  --shadow:  0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
+
+/* SETUP BANNER */
+#setup-banner { background: #fff8ec; border-bottom: 2px solid var(--accent2); padding: 14px 18px; display: none; }
+#setup-banner.show { display: block; }
+.setup-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.setup-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+.setup-row   { display: flex; gap: 8px; }
+#api-url-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 8px 10px; border: 1.5px solid var(--border2); border-radius: 7px; background: white; color: var(--text); outline: none; }
+#api-url-input:focus { border-color: var(--accent); }
+.btn-save-url { font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px; border: none; background: var(--accent); color: white; cursor: pointer; }
+
+/* NAME MODAL */
+#name-modal { position: fixed; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(4px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
+#name-modal.hidden { display: none; }
+.modal-card { background: white; border-radius: 16px; padding: 24px 20px; width: 100%; max-width: 320px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-card h2 { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; margin-bottom: 6px; }
+.modal-card p  { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+#name-input { width: 100%; font-family: 'Instrument Sans', sans-serif; font-size: 14px; padding: 11px 13px; border: 1.5px solid var(--border2); border-radius: 9px; background: var(--bg); color: var(--text); outline: none; margin-bottom: 12px; }
+#name-input:focus { border-color: var(--accent); background: white; }
+#name-submit { width: 100%; font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 9px; border: none; background: var(--accent); color: white; cursor: pointer; }
+
+/* HEADER */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 18px 0; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+.header-row { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+.logo-mark { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.header-text h1 { font-family: 'Instrument Serif', serif; font-size: 17px; font-weight: 400; }
+.header-text p  { font-size: 11px; color: var(--text3); margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: .6px; }
+
+/* SYNC ROW */
+.sync-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sync-pill { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--text3); background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); transition: background .3s; }
+.sync-dot.syncing { background: var(--accent2); animation: pulse 1s infinite; }
+.sync-dot.synced  { background: var(--green); }
+.sync-dot.error   { background: var(--accent); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.user-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--blue); background: #eef4ff; border: 1px solid #bfdbfe; border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+
+/* PROGRESS CARD */
+.progress-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.prog-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.prog-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.prog-fraction { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: var(--text2); }
+.prog-track { background: var(--border); border-radius: 999px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+.prog-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width .5s cubic-bezier(.4,0,.2,1); }
+.prog-chips { display: flex; gap: 10px; }
+.chip { font-size: 11px; font-weight: 500; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* TAB BAR */
+.tab-bar { display: flex; border-top: 1px solid var(--border); }
+.tab-btn { flex: 1; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600; padding: 10px 6px; border: none; background: transparent; color: var(--text3); cursor: pointer; border-bottom: 2.5px solid transparent; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: #fff5f5; }
+
+/* FILTER ROWS */
+.filter-row { display: flex; gap: 7px; padding: 11px 18px; overflow-x: auto; scrollbar-width: none; background: var(--surface); border-bottom: 1px solid var(--border); }
+.filter-row::-webkit-scrollbar { display: none; }
+.f-btn { flex-shrink: 0; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600; padding: 5px 13px; border-radius: 999px; border: 1.5px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; transition: all .18s; }
+.f-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
+
+/* TAB PAGES */
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+
+/* ── CHECKLIST ── */
+.sections { padding: 14px 18px 0; display: flex; flex-direction: column; gap: 10px; }
+.sec-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.sec-head { display: flex; align-items: center; gap: 10px; padding: 13px 14px; cursor: pointer; user-select: none; }
+.sec-icon { font-size: 15px; flex-shrink: 0; width: 30px; height: 30px; background: var(--bg); border-radius: 7px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+.sec-info { flex: 1; min-width: 0; }
+.sec-info h2 { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sec-info p  { font-size: 10.5px; color: var(--text3); margin-top: 1px; }
+.sec-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.sec-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 5px; background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+.sec-badge.complete { background: #edfaf3; color: var(--green); border-color: #b3e8cc; }
+.chevron { font-size: 10px; color: var(--text3); transition: transform .22s; }
+.sec-card.collapsed .chevron { transform: rotate(-90deg); }
+.sec-prog { height: 2px; background: var(--bg2); }
+.sec-prog-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width .4s; }
+.sec-body { overflow: hidden; }
+.sec-card.collapsed .sec-body { display: none; }
+
+/* ITEMS */
+.item { display: flex; align-items: flex-start; gap: 11px; padding: 11px 14px; border-top: 1px solid var(--bg2); cursor: pointer; transition: background .12s; -webkit-user-select: none; user-select: none; }
+.item:active { background: var(--bg); }
+.item.done { background: #fafcfa; }
+.item.done .item-text { text-decoration: line-through; color: var(--text3); }
+.item.pending-save { opacity: .7; }
+.cb { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all .18s; background: white; }
+.item.done .cb { background: var(--green); border-color: var(--green); }
+.cb-check { color: white; font-size: 11px; font-weight: 700; opacity: 0; transform: scale(.4); transition: all .18s; }
+.item.done .cb-check { opacity: 1; transform: scale(1); }
+.item-body { flex: 1; min-width: 0; }
+.item-text { font-size: 13px; line-height: 1.45; color: var(--text); font-weight: 500; }
+.who-badge { font-size: 10px; color: var(--text3); font-weight: 500; margin-top: 4px; display: none; }
+.item.done .who-badge { display: block; }
+.tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 5px; }
+.tag-foto   { background:#eef4ff; color:#2563eb; }
+.tag-data   { background:#fff8ec; color:#d97706; }
+.tag-gambar { background:#f5f0ff; color:#7c3aed; }
+.tag-teks   { background:#ecfdf5; color:#059669; }
+
+/* ── PERTANYAAN ── */
+.q-filter-row { display: flex; gap: 7px; padding: 11px 18px; overflow-x: auto; scrollbar-width: none; background: var(--surface); border-bottom: 1px solid var(--border); }
+.q-filter-row::-webkit-scrollbar { display: none; }
+
+.q-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 18px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.q-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: var(--text2); }
+.q-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.q-wrap { padding: 14px 18px 0; display: flex; flex-direction: column; gap: 10px; }
+
+.q-group-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text3); display: flex; align-items: center; gap: 8px; padding: 2px 0; margin-top: 4px; }
+.q-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.q-head { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; cursor: pointer; user-select: none; }
+.q-level-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.q-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text3); flex-shrink: 0; margin-top: 2px; min-width: 20px; }
+.q-question { flex: 1; font-size: 13px; font-weight: 600; line-height: 1.45; color: var(--text); }
+.q-chevron { font-size: 10px; color: var(--text3); transition: transform .22s; flex-shrink: 0; margin-top: 3px; }
+.q-card.collapsed .q-chevron { transform: rotate(-90deg); }
+.q-body { border-top: 1px solid var(--bg2); }
+.q-card.collapsed .q-body { display: none; }
+.q-answer { padding: 12px 14px 10px 44px; font-size: 12.5px; line-height: 1.65; color: var(--text2); }
+.q-answer strong { color: var(--text); font-weight: 700; }
+.q-tip { margin: 0 14px 10px 44px; background: #fff8ec; border: 1px solid #fde8c0; border-left: 3px solid var(--accent2); border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 12px; line-height: 1.55; color: #92400e; }
+.q-tip::before { content: '💡 Tip: '; font-weight: 700; }
+.q-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; margin: 0 14px 13px 44px; text-transform: uppercase; letter-spacing: .3px; }
+.lv-kritis  { background:#fef2f2; color:#dc2626; }
+.lv-teknis  { background:#eff6ff; color:#2563eb; }
+.lv-metode  { background:#f5f3ff; color:#7c3aed; }
+.lv-hasil   { background:#f0fdf4; color:#15803d; }
+.lv-sustain { background:#fff7ed; color:#c2410c; }
+
+/* BOTTOM BAR */
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; z-index: 200; box-shadow: 0 -4px 16px rgba(0,0,0,.07); }
+.bb-stat { display: flex; align-items: baseline; gap: 5px; }
+.bb-pct  { font-family: 'Instrument Serif', serif; font-size: 26px; color: var(--accent); line-height: 1; }
+.bb-label { font-size: 12px; color: var(--text3); font-weight: 500; }
+.bb-actions { display: flex; gap: 8px; }
+.btn-small { font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600; padding: 7px 13px; border-radius: 8px; cursor: pointer; border: 1.5px solid var(--border); background: white; color: var(--text2); transition: all .15s; }
+.btn-reset { border-color: #fca5a5; color: var(--accent); background: #fff5f5; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: white; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 999px; opacity: 0; transition: all .25s; z-index: 300; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* LOADING */
+.loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 14px; }
+.loading-spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--text3); font-weight: 500; }
+
+/* CONFETTI */
+.cf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 999; }
+@keyframes cf-fall { from { transform: translateY(-12px) rotate(0deg); opacity: 1; } to { transform: translateY(100vh) rotate(540deg); opacity: 0; } }
+.cf { position: absolute; border-radius: 2px; animation: cf-fall linear forwards; }
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 13px; }
+.empty-state .emoji { font-size: 36px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Setup Banner -->
+<div id="setup-banner">
+  <div class="setup-title">⚙️ Setup: Tempel URL Google Apps Script</div>
+  <div class="setup-desc">Salin URL dari deploy Apps Script (lihat README), tempel di bawah. Hanya sekali.</div>
+  <div class="setup-row">
+    <input id="api-url-input" type="url" placeholder="https://script.google.com/macros/s/AKfyc.../exec">
+    <button class="btn-save-url" onclick="saveApiUrl()">Simpan</button>
+  </div>
+</div>
+
+<!-- Name Modal -->
+<div id="name-modal">
+  <div class="modal-card">
+    <h2>Halo, siapa kamu? 👋</h2>
+    <p>Masukkan namamu supaya rekan tim tahu siapa yang menyelesaikan item ini.</p>
+    <input id="name-input" type="text" placeholder="Nama kamu..." maxlength="30">
+    <button id="name-submit" onclick="saveName()">Mulai →</button>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Memuat data tim...</div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-row">
+    <div class="logo-mark">🔬</div>
+    <div class="header-text">
+      <h1>SCANDALS 2.0</h1>
+      <p>Checklist & Persiapan Sidang · Tim SS</p>
+    </div>
+  </div>
+  <div class="sync-row">
+    <div class="sync-pill">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Memuat...</span>
+    </div>
+    <div class="user-chip" onclick="changeName()">👤 <span id="user-name-display">—</span></div>
+  </div>
+  <div class="progress-card">
+    <div class="prog-top">
+      <span class="prog-label">Progress Kelengkapan</span>
+      <span class="prog-fraction" id="frac">0 / 63</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-chips">
+      <div class="chip"><div class="chip-dot" style="background:var(--green)"></div><span id="c-done">0 selesai</span></div>
+      <div class="chip"><div class="chip-dot" style="background:var(--border2)"></div><span id="c-rem">63 belum</span></div>
+      <div class="chip"><div class="chip-dot" style="background:var(--accent)"></div><span id="c-pct">0%</span></div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="checklist" onclick="switchTab('checklist')">✅ Checklist</button>
+    <button class="tab-btn" data-tab="pertanyaan" onclick="switchTab('pertanyaan')">🎤 Pertanyaan Penguji</button>
+  </div>
+</div>
+
+<!-- TAB: CHECKLIST -->
+<div class="tab-page active" id="tab-checklist">
+  <div class="filter-row" id="filters">
+    <button class="f-btn active" data-f="all">Semua</button>
+    <button class="f-btn" data-f="foto">📷 Foto</button>
+    <button class="f-btn" data-f="data">📊 Data</button>
+    <button class="f-btn" data-f="gambar">🖼️ Gambar</button>
+    <button class="f-btn" data-f="teks">📝 Teks</button>
+    <button class="f-btn" data-f="belum">⏳ Belum</button>
+  </div>
+  <div class="sections" id="sections"></div>
+</div>
+
+<!-- TAB: PERTANYAAN -->
+<div class="tab-page" id="tab-pertanyaan">
+  <div class="q-filter-row" id="q-filters">
+    <button class="f-btn active" data-qf="all">Semua (20)</button>
+    <button class="f-btn" data-qf="kritis">🔴 Kritis</button>
+    <button class="f-btn" data-qf="teknis">🔵 Teknis</button>
+    <button class="f-btn" data-qf="metode">🟣 Metodologi</button>
+    <button class="f-btn" data-qf="hasil">🟢 Hasil</button>
+    <button class="f-btn" data-qf="sustain">🟠 Keberlanjutan</button>
+  </div>
+  <div class="q-legend">
+    <div class="q-legend-item"><div class="q-dot" style="background:#dc2626"></div>Kritis — hampir pasti ditanya</div>
+    <div class="q-legend-item"><div class="q-dot" style="background:#2563eb"></div>Teknis sistem</div>
+    <div class="q-legend-item"><div class="q-dot" style="background:#7c3aed"></div>Metodologi SS</div>
+    <div class="q-legend-item"><div class="q-dot" style="background:#15803d"></div>Hasil & dampak</div>
+    <div class="q-legend-item"><div class="q-dot" style="background:#c2410c"></div>Keberlanjutan</div>
+  </div>
+  <div class="q-wrap" id="q-container"></div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <div class="bb-stat">
+    <div class="bb-pct" id="bb-pct">0%</div>
+    <div class="bb-label">checklist selesai</div>
+  </div>
+  <div class="bb-actions">
+    <button class="btn-small" id="refresh-btn">↺ Refresh</button>
+    <button class="btn-small btn-reset" id="reset-btn">Reset</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="cf-layer" id="confetti"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DATA — CHECKLIST
+// ════════════════════════════════════════════
+const SECTIONS = [
+  { id:'plan1', icon:'📋', title:'PLAN 1 — Menentukan Masalah', sub:'Jan 2025 · Section 1.1–1.10', items:[
+    {id:'p1_01',text:'Section 1.3 — Isi nama PIC Data (Check Sheet)',tag:'teks'},
+    {id:'p1_02',text:'Section 1.6 No.1 — Pihak Terkait, Dampak & Harapan',tag:'teks'},
+    {id:'p1_03',text:'Section 1.6 No.2 — Pihak Terkait, Dampak & Harapan',tag:'teks'},
+    {id:'p1_04',text:'Section 1.6 No.3 — Pihak Terkait, Dampak & Harapan',tag:'teks'},
+    {id:'p1_05',text:'Section 1.6 No.4 — Pihak Terkait, Dampak & Harapan',tag:'teks'},
+    {id:'p1_06',text:'Section 1.8 — Isi durasi waktu Time Based (SMART)',tag:'teks'},
+    {id:'p1_07',text:'Section 1.10 — Tanggal Pembina Unit Kerja',tag:'teks'},
+    {id:'p1_08',text:'Section 1.10 — Tanggal Pembina Departemen/SBU',tag:'teks'},
+  ]},
+  { id:'plan2', icon:'🔍', title:'PLAN 2 — Identifikasi Penyebab', sub:'Jan 2025 · Section 2.1–2.6', items:[
+    {id:'p2_01',text:'Section 2.5 — Isi nama PIC Data (Analisa Akar Penyebab)',tag:'teks'},
+    {id:'p2_02',text:'Section 2.1 Genba — Foto: Pasien tidak mengisi survei',tag:'foto'},
+    {id:'p2_03',text:'Section 2.1 Genba — Foto: Pasien tidak tahu ada survei',tag:'foto'},
+    {id:'p2_04',text:'Section 2.1 Genba — Foto: Pasien tidak terdorong mengisi',tag:'foto'},
+    {id:'p2_05',text:'Section 2.1 Genba — Foto: Pasien kesulitan temukan form',tag:'foto'},
+    {id:'p2_06',text:'Section 2.3 — Insert Diagram Fishbone',tag:'gambar'},
+    {id:'p2_07',text:'Section 2.5 — Gambar bukti C1: tidak ada link survei',tag:'gambar'},
+    {id:'p2_08',text:'Section 2.5 — Gambar bukti C2: belum ada user flow',tag:'gambar'},
+    {id:'p2_09',text:'Section 2.5 — Gambar bukti C3: tidak ada mekanisme otomatis',tag:'gambar'},
+    {id:'p2_10',text:'Section 2.5 — Gambar bukti C4: belum ada media digital',tag:'gambar'},
+  ]},
+  { id:'plan3', icon:'💡', title:'PLAN 3 — Alternatif Solusi', sub:'Feb 2025 · Section 3.1–3.3', items:[
+    {id:'p3_01',text:'Alt #1 — Foto alur existing (4 kolom)',tag:'foto'},
+    {id:'p3_02',text:'Alt #1 — Foto alur Poster/Banner QR (4 kolom)',tag:'foto'},
+    {id:'p3_03',text:'Alt #2 — Foto alur existing (4 kolom)',tag:'foto'},
+    {id:'p3_04',text:'Alt #2 — Foto alur SMS/WA Blast (4 kolom)',tag:'foto'},
+    {id:'p3_05',text:'Alt #3 — Foto alur existing (4 kolom)',tag:'foto'},
+    {id:'p3_06',text:'Alt #3 — Foto alur Survei Telepon CS (4 kolom)',tag:'foto'},
+    {id:'p3_07',text:'Alt #4 — Foto alur existing (4 kolom)',tag:'foto'},
+    {id:'p3_08',text:'Alt #4 — Foto alur Survei via Tablet (4 kolom)',tag:'foto'},
+    {id:'p3_09',text:'Alt #5 — Foto alur existing (4 kolom)',tag:'foto'},
+    {id:'p3_10',text:'Alt #5 — Foto alur SCANDALS 2.0 (4 kolom)',tag:'foto'},
+    {id:'p3_11',text:'Section 3.2 — Insert Logo SCANDALS',tag:'gambar'},
+    {id:'p3_12',text:'Section 3.2 — Foto alur baru: Pendaftaran',tag:'foto'},
+    {id:'p3_13',text:'Section 3.2 — Foto alur baru: Sampling Sampel',tag:'foto'},
+    {id:'p3_14',text:'Section 3.2 — Foto alur baru: Analisa Sampel',tag:'foto'},
+    {id:'p3_15',text:'Section 3.2 — Foto alur baru: Scan QR + Password',tag:'foto'},
+    {id:'p3_16',text:'Section 3.2 — Foto alur baru: Prompt Survei Ya/Tidak',tag:'foto'},
+    {id:'p3_17',text:'Section 3.2 — Foto alur baru: Hasil Lab + Data Survei',tag:'foto'},
+  ]},
+  { id:'do', icon:'🛠️', title:'DO — Pelaksanaan Perbaikan', sub:'Mar–Apr 2025 · Section 5.1–5.6', items:[
+    {id:'d_01',text:'Langkah 1 — Foto Rapat Koordinasi & Skema Sistem (01–04 Mar)',tag:'foto'},
+    {id:'d_02',text:'Langkah 2 — Foto Pendataan Kebutuhan Teknis (05 Mar)',tag:'foto'},
+    {id:'d_03',text:'Langkah 3 — Foto Pendataan Anggaran (06–07 Mar)',tag:'foto'},
+    {id:'d_04',text:'Langkah 4 — Foto Menyusun Jadwal Pembuatan (08 Mar)',tag:'foto'},
+    {id:'d_05',text:'Langkah 5 — Foto Menyiapkan Server & Peralatan (09–10 Mar)',tag:'foto'},
+    {id:'d_06',text:'Langkah 6 — Foto Menyiapkan Jaringan & Koneksi (11–12 Mar)',tag:'foto'},
+    {id:'d_07',text:'Langkah 7 — Foto Coding Modul Survei (13 Mar–20 Apr)',tag:'foto'},
+    {id:'d_08',text:'Langkah 8 — Foto Integrasi Prompt ke SCANDALS (13 Mar–20 Apr)',tag:'foto'},
+    {id:'d_09',text:'Langkah 9 — Foto Uji Coba Pasien (21–23 Apr)',tag:'foto'},
+    {id:'d_10',text:'Langkah 10 — Foto Validasi Sistem 7 Hari (24–30 Apr)',tag:'foto'},
+    {id:'d_11',text:'Section 5.6 — Respons Rate Hari 1 (24 Apr 2025)',tag:'data'},
+    {id:'d_12',text:'Section 5.6 — Respons Rate Hari 2 (25 Apr 2025)',tag:'data'},
+    {id:'d_13',text:'Section 5.6 — Respons Rate Hari 3 (26 Apr 2025)',tag:'data'},
+    {id:'d_14',text:'Section 5.6 — Respons Rate Hari 4 (27 Apr 2025)',tag:'data'},
+    {id:'d_15',text:'Section 5.6 — Respons Rate Hari 5 (28 Apr 2025)',tag:'data'},
+    {id:'d_16',text:'Section 5.6 — Respons Rate Hari 6 (29 Apr 2025)',tag:'data'},
+    {id:'d_17',text:'Section 5.6 — Respons Rate Hari 7 (30 Apr 2025)',tag:'data'},
+  ]},
+  { id:'check', icon:'✅', title:'CHECK — Periksa Hasil', sub:'Mei–Jul 2025 · Section 6.1–6.9', items:[
+    {id:'c_01',text:'Section 6.6 — Biaya cetak formulir sebelum perbaikan (Rp/bulan)',tag:'data'},
+    {id:'c_02',text:'Section 6.6 — Penghematan per bulan (Rp/bulan)',tag:'data'},
+    {id:'c_03',text:'Section 6.6 — Penghematan per tahun (Rp/tahun)',tag:'data'},
+    {id:'c_04',text:'Section 6.7 — Pihak Terkait baris 1 + Pengaruh Setelah Perbaikan',tag:'teks'},
+    {id:'c_05',text:'Section 6.7 — Pihak Terkait baris 2 + Pengaruh Setelah Perbaikan',tag:'teks'},
+    {id:'c_06',text:'Section 6.7 — Pihak Terkait baris 3 + Pengaruh Setelah Perbaikan',tag:'teks'},
+  ]},
+  { id:'action', icon:'📌', title:'ACTION — Standarisasi', sub:'Ags 2025 · Section 7.1–7.8', items:[
+    {id:'a_01',text:'Section 7.3 — PIC Sosialisasi Internal (22 Ags 2025)',tag:'teks'},
+    {id:'a_02',text:'Section 7.3 — Foto Sosialisasi Internal (Rapat Tim Lab)',tag:'foto'},
+    {id:'a_03',text:'Section 7.3 — Foto Edukasi Pasien di Ruang Tunggu',tag:'foto'},
+    {id:'a_04',text:'Section 7.3 — Foto Poster Tutorial di Area Laboratorium',tag:'foto'},
+    {id:'a_05',text:'Section 7.6 — Data tren respons rate Jan 2026',tag:'data'},
+    {id:'a_06',text:'Section 7.6 — Data tren respons rate Feb 2026',tag:'data'},
+    {id:'a_07',text:'Section 7.6 — Data tren respons rate Mar 2026',tag:'data'},
+    {id:'a_08',text:'Section 7.6 — Data tren respons rate Apr 2026',tag:'data'},
+    {id:'a_09',text:'Section 7.6 — Data tren respons rate Mei 2026',tag:'data'},
+    {id:'a_10',text:'Section 7.6 — Data tren respons rate Jun 2026',tag:'data'},
+    {id:'a_11',text:'Section 7.6 — Data tren respons rate Jul 2026',tag:'data'},
+    {id:'a_12',text:'Section 7.6 — Data tren respons rate Ags 2026',tag:'data'},
+    {id:'a_13',text:'Section 7.6 — Data tren respons rate Sep 2026',tag:'data'},
+    {id:'a_14',text:'Section 7.6 — Insert Grafik Tren Respons Rate (Okt 2025–Sep 2026)',tag:'gambar'},
+  ]},
+];
+
+// ════════════════════════════════════════════
+// DATA — PERTANYAAN PENGUJI
+// ════════════════════════════════════════════
+const QUESTIONS = [
+  { group:'🔴 Kritis — Hampir Pasti Ditanya', key:'kritis', color:'#dc2626', items:[
+    { id:'q01',
+      q:'Mengapa periode baseline Oktober–Desember 2025, padahal implementasi dilakukan Maret–April 2025? Bukankah baseline harus sebelum implementasi?',
+      a:'Ini adalah inkonsistensi kronologi dalam dokumen. <strong>Baseline yang benar kemungkinan adalah Oktober–Desember 2024</strong>, bukan 2025. Tim wajib mengkonfirmasi dan mengoreksi tahun di seluruh dokumen sebelum sidang.',
+      tip:'Siapkan jawaban tegas: "Terdapat kesalahan penulisan tahun, baseline yang benar adalah Okt–Des 2024." Jangan ragu mengakui typo — lebih baik dari membela data yang salah.' },
+    { id:'q02',
+      q:'Frekuensi C3 di tabel 2.5 tercatat 24 kejadian (37,04%), tapi di tabel 2.6 menjadi 35 kejadian (47,95%). Mana yang benar?',
+      a:'<strong>Yang digunakan sebagai dasar keputusan adalah tabel 2.6 (35 kejadian, 47,95%)</strong> karena merupakan data yang sudah divalidasi ulang di lapangan. Tabel 2.5 adalah data awal sebelum verifikasi.',
+      tip:'Pastikan angka di abstrak dan kesimpulan menggunakan angka tabel 2.6. Jika ada perbedaan, jelaskan metode verifikasi yang dilakukan antara dua tahap pencatatan tersebut.' },
+    { id:'q03',
+      q:'Total data hanya 99 — apakah ini representatif? Berapa rata-rata kunjungan pasien laboratorium per bulan?',
+      a:'99 adalah <strong>frekuensi kejadian masalah</strong> selama 3 bulan observasi, bukan jumlah sampel survei. Tim harus siap menyebut total kunjungan pasien per bulan sebagai konteks, agar penguji paham proporsinya.',
+      tip:'Hitung dan hafal: total pasien lab/bulan × 3 bulan = total populasi observasi. Dari situ bisa dijelaskan 99 kejadian mewakili berapa persen masalah yang terekam.' },
+    { id:'q04',
+      q:'Bagaimana cara menghitung respons rate 30%? 30% dari total berapa pasien per bulan?',
+      a:'Respons rate 30% berarti dari total pasien yang mengambil hasil lab dalam sebulan, hanya 30% yang mengisi survei. <strong>Siapkan angka absolut</strong> — misalnya dari 200 pasien/bulan, hanya ~60 yang mengisi.',
+      tip:'Hitung dan hafal dua angka ini: (total pasien/bulan × 30%) = pengisi survei sebelumnya, dan (total pasien/bulan × 85%) = pengisi survei sesudahnya.' },
+  ]},
+  { group:'🔵 Teknis Sistem', key:'teknis', color:'#2563eb', items:[
+    { id:'q05',
+      q:'Bagaimana sistem mencegah satu pasien mengisi survei lebih dari sekali?',
+      a:'Sistem menggunakan <strong>nomor RM + tanggal lahir sebagai identitas unik</strong>. Setelah pasien mengisi, status survei pada kunjungan tersebut ditandai "selesai" sehingga prompt tidak muncul ulang.',
+      tip:'Pastikan tim developer dapat menjelaskan secara teknis bagaimana flag "sudah mengisi" disimpan di database LIMS.' },
+    { id:'q06',
+      q:'Jika pasien memilih "Tidak" pada prompt survei, apakah ada mekanisme lain untuk mendorong mereka mengisi?',
+      a:'Saat ini pasien yang memilih "Tidak" langsung diarahkan ke halaman hasil lab. <strong>Ini bisa diakui sebagai area pengembangan</strong> ke depan — misalnya reminder saat kunjungan berikutnya.',
+      tip:'Jadikan sebagai poin "rencana pengembangan" yang sudah tercantum di section 7.7, bukan sebagai kelemahan.' },
+    { id:'q07',
+      q:'Seberapa aman password berupa tanggal lahir + nomor RM? Bukankah data ini relatif mudah diketahui?',
+      a:'Kombinasi ini memang bukan enkripsi tingkat tinggi, namun <strong>cukup proporsional untuk konteks survei kepuasan</strong> — bukan akses data medis. Tidak ada data sensitif yang bisa dicuri melalui form survei.',
+      tip:'Tekankan: akses ini hanya untuk survei, bukan untuk melihat rekam medis. Sistem LIMS utama memiliki lapisan keamanan tersendiri yang terpisah.' },
+    { id:'q08',
+      q:'Bagaimana dengan pasien lansia atau yang tidak familiar teknologi? Berapa proporsinya?',
+      a:'<strong>Petugas laboratorium siap membantu pasien mengisi survei</strong> jika diminta. Hasil cetak lab juga tetap tersedia sebagai backup. Proporsi pasien non-tech-savvy perlu disiapkan dari data demografis pasien RS.',
+      tip:'Siapkan estimasi persentase pasien ≥60 tahun dari data kunjungan laboratorium sebagai jawaban kuantitatif.' },
+    { id:'q09',
+      q:'Jika server down atau internet pasien buruk saat mengisi, apakah data yang sudah diinput tersimpan?',
+      a:'Server RS dilindungi UPS dan koneksi ditingkatkan dari 10 Mbps ke 20 Mbps. <strong>Jika koneksi pasien yang bermasalah</strong>, data yang belum ter-submit memang berpotensi hilang — ini adalah keterbatasan wajar sistem berbasis web.',
+      tip:'Sebutkan target uptime ≥99% di section 7.1 sebagai standar keberlanjutan yang sudah ditetapkan.' },
+  ]},
+  { group:'🟣 Metodologi SS', key:'metode', color:'#7c3aed', items:[
+    { id:'q10',
+      q:'Mengapa hanya C3 yang jadi fokus? C3+C4 kumulatif baru 75,34% — belum melewati 80% Pareto.',
+      a:'Solusi SCANDALS 2.0 sebenarnya <strong>menjawab keempat akar penyebab sekaligus (C1–C4)</strong> dalam satu implementasi. Integrasi prompt otomatis menyelesaikan C3, user flow baru menyelesaikan C2 dan C4, link terintegrasi menyelesaikan C1.',
+      tip:'Perkuat narasi: "Meskipun prioritas pada C3, solusi SCANDALS 2.0 secara holistik menyelesaikan seluruh akar penyebab yang teridentifikasi dalam satu sistem terintegrasi."' },
+    { id:'q11',
+      q:'Fishbone hanya mencakup faktor Cara dan Orang. Mengapa tidak ada Mesin, Material, atau Lingkungan?',
+      a:'Dari brainstorming dan genba, <strong>tidak ditemukan kontribusi signifikan dari Mesin, Material, atau Lingkungan</strong> terhadap rendahnya respons rate. Masalah inti ada pada alur proses dan kesadaran pasien.',
+      tip:'Siapkan argumen spesifik: apa temuan genba yang menunjukkan ketiga faktor itu tidak berkontribusi pada masalah ini.' },
+    { id:'q12',
+      q:'Alternatif #1–#4 ditolak hanya berdasarkan evaluasi teori. Apakah ada uji coba nyata?',
+      a:'Penolakan didasarkan pada <strong>evaluasi matriks Q-C-D-S-H-M yang terstruktur</strong>. Metodologi SS memperbolehkan evaluasi tanpa uji coba jika kelemahan teknis dan fungsional sudah jelas teridentifikasi dari analisis.',
+      tip:'Jelaskan bahwa uji coba penuh dilakukan hanya pada solusi terpilih untuk efisiensi sumber daya — ini adalah praktik umum yang valid dalam gugus SS.' },
+    { id:'q13',
+      q:'Bagaimana memastikan target 80% bukan disesuaikan mundur setelah hasil diketahui?',
+      a:'Target 80% ditetapkan <strong>sebelum implementasi</strong> dan disahkan Pembina pada 28 Februari 2025 — sebelum implementasi Maret–April 2025. Tanggal pengesahan menjadi bukti objektivitas target.',
+      tip:'Tunjukkan halaman pengesahan dengan tanggal 28 Feb 2025 saat sidang sebagai bukti konkret.' },
+  ]},
+  { group:'🟢 Hasil & Dampak', key:'hasil', color:'#15803d', items:[
+    { id:'q14',
+      q:'Respons rate naik dari 30% ke 85% — apakah kualitas jawaban surveinya juga valid, atau pasien asal klik?',
+      a:'Validitas dijaga melalui: survei muncul <strong>tepat setelah pasien menerima hasil</strong> (momen paling relevan), skala Likert 1–5 yang mudah dipahami, dan 6 dimensi mutu spesifik yang mendorong penilaian terarah.',
+      tip:'Jika ada data distribusi skor (tidak semua pasien memberi nilai 5), siapkan sebagai bukti kualitas jawaban yang beragam dan otentik.' },
+    { id:'q15',
+      q:'Berapa respons rate per hari selama validasi 7 hari (24–30 April)? Konsisten atau fluktuatif?',
+      a:'Data per hari harus disiapkan dari catatan aktual validasi. <strong>Tren ideal adalah meningkat dari hari ke hari</strong> seiring optimasi desain prompt dan kompatibilitas browser.',
+      tip:'WAJIB isi tabel 7 hari di section 5.6 sebelum sidang. Penguji hampir pasti meminta angka ini dan akan skeptis jika tidak tersedia.' },
+    { id:'q16',
+      q:'Penghematan biaya disebutkan tapi nominalnya kosong. Berapa angka pastinya per bulan dan tahun?',
+      a:'Hitungan: <strong>jumlah formulir dicetak per bulan × harga cetak per lembar</strong> = penghematan bulanan. Kalikan 12 untuk penghematan tahunan. Angka ini harus diisi dari data logistik RS sebelum sidang.',
+      tip:'Minta data ke bagian administrasi/logistik RS: berapa lembar formulir survei kepuasan dicetak per bulan dan berapa biayanya (termasuk kertas + tinta).' },
+    { id:'q17',
+      q:'Apa rencana jika respons rate turun kembali di bawah 80% setelah pemantauan?',
+      a:'Mekanisme sudah disiapkan: monitoring harian petugas lab, evaluasi bulanan Ka. Instalasi, dan <strong>notifikasi otomatis ke manajemen</strong> jika di bawah threshold (rencana pengembangan section 7.7).',
+      tip:'Tunjukkan tabel monitoring keberlanjutan di section 7.5 sebagai bukti sistem pemantauan sudah terstruktur dan tidak bergantung pada individu.' },
+  ]},
+  { group:'🟠 Keberlanjutan & Replikasi', key:'sustain', color:'#c2410c', items:[
+    { id:'q18',
+      q:'SOP yang dibuat ada 4 dokumen — apa saja judulnya dan sudah disahkan oleh siapa?',
+      a:'Empat SOP: (1) Penggunaan SCANDALS 2.0 oleh Pasien, (2) Monitoring Respons Rate, (3) Penanganan Gangguan Sistem, (4) Backup Data Survei. <strong>Tim harus mengkonfirmasi status pengesahan dan penandatangan</strong> masing-masing SOP.',
+      tip:'Bawa fotokopi atau tampilkan foto keempat SOP saat sidang sebagai bukti fisik standarisasi yang sudah selesai.' },
+    { id:'q19',
+      q:'Replikasi ke Radiologi, Poli Umum, IGD, Farmasi — apakah unit-unit itu menggunakan LIMS yang sama?',
+      a:'Replikasi bergantung pada apakah unit lain sudah terintegrasi infrastruktur LIMS yang sama. <strong>Unit yang sudah pakai LIMS: replikasi mudah. Yang belum: perlu pengembangan modul tambahan.</strong>',
+      tip:'Siapkan peta unit RS yang sudah dan belum menggunakan LIMS — ini menunjukkan tim sudah memikirkan skalabilitas secara konkret.' },
+    { id:'q20',
+      q:'Jika Kru LIMS (pengembang) keluar atau tidak tersedia, siapa yang maintenance sistem ke depan?',
+      a:'Mitigasi: (1) dokumentasi teknis sistem yang lengkap, (2) <strong>transfer knowledge ke minimal 2 anggota tim</strong>, (3) kode sistem tersimpan di repository internal RS, (4) dukungan teknis dari vendor LIMS jangka panjang.',
+      tip:'Jika dokumentasi teknis belum ada, jadikan sebagai komitmen tindak lanjut yang sudah direncanakan — ini menunjukkan kematangan berpikir gugus.' },
+  ]},
+];
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const TOTAL    = SECTIONS.reduce((s,sec) => s + sec.items.length, 0);
+const LS_URL   = 'scandals2_api_url';
+const LS_NAME  = 'scandals2_user_name';
+const LS_CACHE = 'scandals2_checked_cache';
+
+let apiUrl        = localStorage.getItem(LS_URL)  || '';
+let userName      = localStorage.getItem(LS_NAME) || '';
+let checked       = {};
+let collapsed     = {};
+let qCollapsed    = {};
+let activeFilter  = 'all';
+let activeQFilter = 'all';
+let saveQueue     = {};
+let isSaving      = false;
+
+// ════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════
+async function apiFetch(params={}, body=null) {
+  if (!apiUrl) return null;
+  const url = new URL(apiUrl);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  try {
+    const res  = await fetch(url.toString(), body ? {method:'POST',body:JSON.stringify(body)} : {method:'GET'});
+    const json = await res.json();
+    return json.ok ? json : null;
+  } catch(e) { return null; }
+}
+
+async function loadData() {
+  setSyncState('syncing','Mengambil data...');
+  const res = await apiFetch({action:'get'});
+  if (res) {
+    checked = res.data || {};
+    localStorage.setItem(LS_CACHE, JSON.stringify(checked));
+    setSyncState('synced','Tersinkron · ' + fmtTime());
+    return true;
+  } else {
+    try { checked = JSON.parse(localStorage.getItem(LS_CACHE)||'{}'); } catch(e){ checked={}; }
+    setSyncState('error','Offline — data lokal');
+    return false;
+  }
+}
+
+async function processQueue() {
+  if (isSaving || !Object.keys(saveQueue).length) return;
+  isSaving = true;
+  setSyncState('syncing','Menyimpan...');
+  const entries = Object.entries(saveQueue);
+  saveQueue = {};
+  let allOk = true;
+  for (const [id,val] of entries) {
+    const res = await apiFetch({}, {action:'set', itemId:id, value:val, updatedBy:userName});
+    if (!res) { allOk=false; saveQueue[id]=val; }
+  }
+  isSaving = false;
+  if (allOk) setSyncState('synced','Tersimpan · '+fmtTime());
+  else { setSyncState('error','Sebagian gagal'); showToast('⚠️ Gagal menyimpan beberapa item'); }
+  if (Object.keys(saveQueue).length) setTimeout(processQueue, 2000);
+}
+
+function setSyncState(state, msg) {
+  document.getElementById('sync-dot').className = 'sync-dot '+state;
+  document.getElementById('sync-label').textContent = msg;
+}
+function fmtTime() {
+  return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ════════════════════════════════════════════
+// PROGRESS
+// ════════════════════════════════════════════
+function doneCount() { return Object.values(checked).filter(v=>v&&v.checked).length; }
+function isChecked(id) { return !!(checked[id]&&checked[id].checked); }
+
+function updateOverall() {
+  const done=doneCount(), pct=Math.round((done/TOTAL)*100);
+  document.getElementById('frac').textContent      = `${done} / ${TOTAL}`;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('c-done').textContent    = `${done} selesai`;
+  document.getElementById('c-rem').textContent     = `${TOTAL-done} belum`;
+  document.getElementById('c-pct').textContent     = `${pct}%`;
+  document.getElementById('bb-pct').textContent    = `${pct}%`;
+}
+
+function updateSecProgress(secId) {
+  const sec = SECTIONS.find(s=>s.id===secId); if (!sec) return;
+  const done = sec.items.filter(i=>isChecked(i.id)).length;
+  const pct  = sec.items.length ? (done/sec.items.length)*100 : 0;
+  const fill  = document.getElementById(`spf-${secId}`);
+  const badge = document.getElementById(`sbd-${secId}`);
+  if (fill)  fill.style.width = pct+'%';
+  if (badge) { badge.textContent = `${done}/${sec.items.length}`; badge.className = 'sec-badge'+(done===sec.items.length?' complete':''); }
+}
+
+// ════════════════════════════════════════════
+// RENDER CHECKLIST
+// ════════════════════════════════════════════
+const tagLbl = {foto:'📷 Foto', data:'📊 Data', gambar:'🖼️ Gambar', teks:'📝 Teks'};
+const tagCls = {foto:'tag-foto', data:'tag-data', gambar:'tag-gambar', teks:'tag-teks'};
+
+function matchFilter(item) {
+  if (activeFilter==='all') return true;
+  if (activeFilter==='belum') return !isChecked(item.id);
+  return item.tag===activeFilter;
+}
+
+function whoText(id) {
+  const d=checked[id];
+  if (!d||!d.checked||!d.updatedBy) return '';
+  return `✓ ${d.updatedBy}${d.updatedAt?' · '+d.updatedAt:''}`;
+}
+
+function renderChecklist() {
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+  let any = false;
+  SECTIONS.forEach(sec => {
+    const visible = sec.items.filter(matchFilter);
+    if (!visible.length) return;
+    any = true;
+    const done = sec.items.filter(i=>isChecked(i.id)).length;
+    const pct  = sec.items.length ? (done/sec.items.length)*100 : 0;
+    const card = document.createElement('div');
+    card.className = 'sec-card'+(collapsed[sec.id]?' collapsed':'');
+    card.id = `sec-${sec.id}`;
+    card.innerHTML = `
+      <div class="sec-head" onclick="toggleSec('${sec.id}')">
+        <div class="sec-icon">${sec.icon}</div>
+        <div class="sec-info"><h2>${sec.title}</h2><p>${sec.sub}</p></div>
+        <div class="sec-right">
+          <span class="sec-badge ${done===sec.items.length?'complete':''}" id="sbd-${sec.id}">${done}/${sec.items.length}</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="sec-prog"><div class="sec-prog-fill" id="spf-${sec.id}" style="width:${pct}%"></div></div>
+      <div class="sec-body">
+        ${visible.map(item=>`
+          <div class="item ${isChecked(item.id)?'done':''}" id="item-${item.id}" onclick="toggle('${item.id}')">
+            <div class="cb"><span class="cb-check">✓</span></div>
+            <div class="item-body">
+              <div class="item-text">${item.text}</div>
+              <div class="who-badge" id="who-${item.id}">${whoText(item.id)}</div>
+              <span class="tag ${tagCls[item.tag]}">${tagLbl[item.tag]}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    container.appendChild(card);
+  });
+  if (!any) container.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div>Tidak ada item di filter ini!</div>`;
+}
+
+// ════════════════════════════════════════════
+// RENDER PERTANYAAN
+// ════════════════════════════════════════════
+const lvBadgeCls = {kritis:'lv-kritis', teknis:'lv-teknis', metode:'lv-metode', hasil:'lv-hasil', sustain:'lv-sustain'};
+const lvBadgeLbl = {kritis:'🔴 Kritis', teknis:'🔵 Teknis', metode:'🟣 Metodologi', hasil:'🟢 Hasil', sustain:'🟠 Keberlanjutan'};
+
+function renderQuestions() {
+  const container = document.getElementById('q-container');
+  container.innerHTML = '';
+  let globalIdx = 0;
+  QUESTIONS.forEach(group => {
+    if (activeQFilter !== 'all' && group.key !== activeQFilter) return;
+    const wrap = document.createElement('div');
+    const label = document.createElement('div');
+    label.className = 'q-group-label';
+    label.textContent = group.group;
+    wrap.appendChild(label);
+
+    group.items.forEach(item => {
+      globalIdx++;
+      const isOpen = qCollapsed[item.id] !== false;
+      const card = document.createElement('div');
+      card.className = 'q-card' + (isOpen ? '' : ' collapsed');
+      card.id = `qc-${item.id}`;
+      card.innerHTML = `
+        <div class="q-head" onclick="toggleQ('${item.id}')">
+          <div class="q-level-dot" style="background:${group.color}"></div>
+          <span class="q-num">${String(globalIdx).padStart(2,'0')}</span>
+          <div class="q-question">${item.q}</div>
+          <span class="q-chevron">▼</span>
+        </div>
+        <div class="q-body">
+          <div class="q-answer">${item.a}</div>
+          <div class="q-tip">${item.tip}</div>
+          <span class="q-badge ${lvBadgeCls[group.key]}">${lvBadgeLbl[group.key]}</span>
+        </div>`;
+      wrap.appendChild(card);
+    });
+    container.appendChild(wrap);
+  });
+}
+
+// ════════════════════════════════════════════
+// INTERACTIONS
+// ════════════════════════════════════════════
+function toggle(id) {
+  if (!apiUrl) { showToast('⚠️ Setup URL dulu!'); document.getElementById('setup-banner').classList.add('show'); return; }
+  const newVal = !isChecked(id);
+  checked[id] = {checked:newVal, updatedBy:userName, updatedAt:fmtTime()};
+  localStorage.setItem(LS_CACHE, JSON.stringify(checked));
+  const el = document.getElementById(`item-${id}`);
+  if (el) {
+    el.className = 'item '+(newVal?'done':'')+' pending-save';
+    const who = document.getElementById(`who-${id}`);
+    if (who) who.textContent = newVal ? whoText(id) : '';
+    setTimeout(()=>el.classList.remove('pending-save'), 1500);
+  }
+  const sec = SECTIONS.find(s=>s.items.some(i=>i.id===id));
+  if (sec) updateSecProgress(sec.id);
+  updateOverall();
+  saveQueue[id] = newVal;
+  setTimeout(processQueue, 300);
+  if (newVal) confetti();
+  if (doneCount()===TOTAL) { showToast('🎉 Semua item selesai! Makalah siap!'); for(let i=0;i<5;i++) setTimeout(confetti,i*180); }
+}
+
+function toggleSec(id) {
+  collapsed[id] = !collapsed[id];
+  const card = document.getElementById(`sec-${id}`);
+  if (card) card.className = 'sec-card'+(collapsed[id]?' collapsed':'');
+}
+
+function toggleQ(id) {
+  qCollapsed[id] = (qCollapsed[id] === false) ? true : false;
+  const card = document.getElementById(`qc-${id}`);
+  if (card) card.className = 'q-card'+(qCollapsed[id]===false?' collapsed':'');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.toggle('active', p.id===`tab-${tab}`));
+}
+
+document.getElementById('filters').addEventListener('click', e=>{
+  const btn=e.target.closest('.f-btn'); if(!btn) return;
+  document.querySelectorAll('#filters .f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter=btn.dataset.f;
+  renderChecklist();
+});
+
+document.getElementById('q-filters').addEventListener('click', e=>{
+  const btn=e.target.closest('.f-btn'); if(!btn) return;
+  document.querySelectorAll('#q-filters .f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeQFilter=btn.dataset.qf;
+  renderQuestions();
+});
+
+document.getElementById('refresh-btn').addEventListener('click', async()=>{
+  setSyncState('syncing','Mengambil data...');
+  await loadData(); renderChecklist(); updateOverall(); showToast('✓ Data diperbarui');
+});
+
+document.getElementById('reset-btn').addEventListener('click', async()=>{
+  if (!confirm('Reset semua progress tim di Google Sheets?')) return;
+  setSyncState('syncing','Mereset...');
+  const res = await apiFetch({},{action:'reset'});
+  if (res) { await loadData(); renderChecklist(); updateOverall(); showToast('↺ Progress direset'); }
+  else { showToast('⚠️ Gagal reset'); setSyncState('error','Gagal reset'); }
+});
+
+// ════════════════════════════════════════════
+// SETUP & NAME
+// ════════════════════════════════════════════
+function saveApiUrl() {
+  const val = document.getElementById('api-url-input').value.trim();
+  if (!val.startsWith('https://script.google.com')) { showToast('URL tidak valid!'); return; }
+  apiUrl=val; localStorage.setItem(LS_URL,apiUrl);
+  document.getElementById('setup-banner').classList.remove('show');
+  showToast('✓ URL tersimpan'); init();
+}
+function saveName() {
+  const val = document.getElementById('name-input').value.trim(); if(!val) return;
+  userName=val; localStorage.setItem(LS_NAME,userName);
+  document.getElementById('name-modal').classList.add('hidden');
+  document.getElementById('user-name-display').textContent=userName;
+}
+function changeName() {
+  document.getElementById('name-input').value=userName;
+  document.getElementById('name-modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('name-input').focus(),100);
+}
+document.getElementById('name-input').addEventListener('keydown',e=>{ if(e.key==='Enter') saveName(); });
+
+// ════════════════════════════════════════════
+// TOAST & CONFETTI
+// ════════════════════════════════════════════
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function confetti() {
+  const layer=document.getElementById('confetti');
+  const colors=['#c0392b','#e67e22','#27ae60','#2980b9','#8e44ad','#f1c40f'];
+  for(let i=0;i<7;i++){
+    const el=document.createElement('div'); el.className='cf';
+    el.style.cssText=`left:${15+Math.random()*70}%;top:-8px;width:${5+Math.random()*6}px;height:${5+Math.random()*6}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${.7+Math.random()*.9}s;animation-delay:${Math.random()*.25}s;`;
+    layer.appendChild(el); setTimeout(()=>el.remove(),1800);
+  }
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+QUESTIONS.forEach(g=>g.items.forEach(i=>{ qCollapsed[i.id]=true; }));
+
+async function init() {
+  document.getElementById('loading').style.display='flex';
+  if (!apiUrl) {
+    document.getElementById('loading').style.display='none';
+    document.getElementById('setup-banner').classList.add('show');
+    setSyncState('error','Perlu setup URL');
+    try { checked=JSON.parse(localStorage.getItem(LS_CACHE)||'{}'); } catch(e){ checked={}; }
+  } else {
+    await loadData();
+    document.getElementById('loading').style.display='none';
+  }
+  renderChecklist();
+  renderQuestions();
+  updateOverall();
+}
+
+if (!userName) document.getElementById('name-modal').classList.remove('hidden');
+else { document.getElementById('name-modal').classList.add('hidden'); document.getElementById('user-name-display').textContent=userName; }
+if (apiUrl) document.getElementById('api-url-input').value=apiUrl;
+
+init();
+</script>
+</body>
+</html>
