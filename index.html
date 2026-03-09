@@ -18,15 +18,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
 
-/* SETUP BANNER */
-#setup-banner { background: #fff8ec; border-bottom: 2px solid var(--accent2); padding: 14px 18px; display: none; }
-#setup-banner.show { display: block; }
-.setup-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
-.setup-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
-.setup-row   { display: flex; gap: 8px; }
-#api-url-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 8px 10px; border: 1.5px solid var(--border2); border-radius: 7px; background: white; color: var(--text); outline: none; }
-#api-url-input:focus { border-color: var(--accent); }
-.btn-save-url { font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 7px; border: none; background: var(--accent); color: white; cursor: pointer; }
+
 
 /* NAME MODAL */
 #name-modal { position: fixed; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(4px); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -181,15 +173,7 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 </head>
 <body>
 
-<!-- Setup Banner -->
-<div id="setup-banner">
-  <div class="setup-title">⚙️ Setup: Tempel URL Google Apps Script</div>
-  <div class="setup-desc">Salin URL dari deploy Apps Script (lihat README), tempel di bawah. Hanya sekali.</div>
-  <div class="setup-row">
-    <input id="api-url-input" type="url" placeholder="https://script.google.com/macros/s/AKfyc.../exec">
-    <button class="btn-save-url" onclick="saveApiUrl()">Simpan</button>
-  </div>
-</div>
+
 
 <!-- Name Modal -->
 <div id="name-modal">
@@ -480,11 +464,10 @@ const QUESTIONS = [
 // STATE
 // ════════════════════════════════════════════
 const TOTAL    = SECTIONS.reduce((s,sec) => s + sec.items.length, 0);
-const LS_URL   = 'scandals2_api_url';
+const API_URL  = 'https://script.google.com/macros/s/AKfycbylOW0koPPf0hsD53e4BPO9epnlZqfWVVS-OrS4Ja50UXXo5oGSMdNbzExBq4DFwoaQ/exec';
 const LS_NAME  = 'scandals2_user_name';
 const LS_CACHE = 'scandals2_checked_cache';
 
-let apiUrl        = localStorage.getItem(LS_URL)  || '';
 let userName      = localStorage.getItem(LS_NAME) || '';
 let checked       = {};
 let collapsed     = {};
@@ -497,12 +480,11 @@ let isSaving      = false;
 // ════════════════════════════════════════════
 // API
 // ════════════════════════════════════════════
-async function apiFetch(params={}, body=null) {
-  if (!apiUrl) return null;
-  const url = new URL(apiUrl);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+async function apiFetch(params={}) {
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v)));
   try {
-    const res  = await fetch(url.toString(), body ? {method:'POST',body:JSON.stringify(body)} : {method:'GET'});
+    const res  = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
     const json = await res.json();
     return json.ok ? json : null;
   } catch(e) { return null; }
@@ -531,7 +513,7 @@ async function processQueue() {
   saveQueue = {};
   let allOk = true;
   for (const [id,val] of entries) {
-    const res = await apiFetch({}, {action:'set', itemId:id, value:val, updatedBy:userName});
+    const res = await apiFetch({ action:'set', itemId:id, value:val, updatedBy:userName });
     if (!res) { allOk=false; saveQueue[id]=val; }
   }
   isSaving = false;
@@ -677,7 +659,7 @@ function renderQuestions() {
 // INTERACTIONS
 // ════════════════════════════════════════════
 function toggle(id) {
-  if (!apiUrl) { showToast('⚠️ Setup URL dulu!'); document.getElementById('setup-banner').classList.add('show'); return; }
+
   const newVal = !isChecked(id);
   checked[id] = {checked:newVal, updatedBy:userName, updatedAt:fmtTime()};
   localStorage.setItem(LS_CACHE, JSON.stringify(checked));
@@ -738,7 +720,7 @@ document.getElementById('refresh-btn').addEventListener('click', async()=>{
 document.getElementById('reset-btn').addEventListener('click', async()=>{
   if (!confirm('Reset semua progress tim di Google Sheets?')) return;
   setSyncState('syncing','Mereset...');
-  const res = await apiFetch({},{action:'reset'});
+  const res = await apiFetch({ action:'reset' });
   if (res) { await loadData(); renderChecklist(); updateOverall(); showToast('↺ Progress direset'); }
   else { showToast('⚠️ Gagal reset'); setSyncState('error','Gagal reset'); }
 });
@@ -746,13 +728,7 @@ document.getElementById('reset-btn').addEventListener('click', async()=>{
 // ════════════════════════════════════════════
 // SETUP & NAME
 // ════════════════════════════════════════════
-function saveApiUrl() {
-  const val = document.getElementById('api-url-input').value.trim();
-  if (!val.startsWith('https://script.google.com')) { showToast('URL tidak valid!'); return; }
-  apiUrl=val; localStorage.setItem(LS_URL,apiUrl);
-  document.getElementById('setup-banner').classList.remove('show');
-  showToast('✓ URL tersimpan'); init();
-}
+
 function saveName() {
   const val = document.getElementById('name-input').value.trim(); if(!val) return;
   userName=val; localStorage.setItem(LS_NAME,userName);
@@ -790,15 +766,8 @@ QUESTIONS.forEach(g=>g.items.forEach(i=>{ qCollapsed[i.id]=true; }));
 
 async function init() {
   document.getElementById('loading').style.display='flex';
-  if (!apiUrl) {
-    document.getElementById('loading').style.display='none';
-    document.getElementById('setup-banner').classList.add('show');
-    setSyncState('error','Perlu setup URL');
-    try { checked=JSON.parse(localStorage.getItem(LS_CACHE)||'{}'); } catch(e){ checked={}; }
-  } else {
-    await loadData();
-    document.getElementById('loading').style.display='none';
-  }
+  await loadData();
+  document.getElementById('loading').style.display='none';
   renderChecklist();
   renderQuestions();
   updateOverall();
@@ -806,7 +775,6 @@ async function init() {
 
 if (!userName) document.getElementById('name-modal').classList.remove('hidden');
 else { document.getElementById('name-modal').classList.add('hidden'); document.getElementById('user-name-display').textContent=userName; }
-if (apiUrl) document.getElementById('api-url-input').value=apiUrl;
 
 init();
 </script>
